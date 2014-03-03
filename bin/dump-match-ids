@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+import json
+import logging
+
+from dotadump import api
+
+
+PARAM_POSSIBILITIES = {
+  'game_mode' : [1,2,3,4,5,16],
+  'skill' : range(3)
+}
+
+
+def main():
+  for match in api.infinite_matches_with(**PARAM_POSSIBILITIES):
+    print match
+
+
+if __name__ == '__main__':
+  api.log.setLevel(logging.DEBUG)
+  api.log.addHandler(logging.FileHandler('dump-match-ids.log'))
+  main()
