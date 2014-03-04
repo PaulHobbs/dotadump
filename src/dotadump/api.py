@@ -35,7 +35,7 @@ def add_new_matches(seen, **kwargs):
   for match in matches(**kwargs):
     id_ = match['match_id']
     if id_ in seen:
-      break
+      continue
     seen.add(id_)
     yield match
 
@@ -44,17 +44,14 @@ def infinite_matches(interval=10, factor=1.5, max_wait=100, lower=50., upper=10.
   seen = set()
 
   while True:
-    new = 0
-    for match in add_new_matches(seen, **kwargs):
-      new += 1
-      yield match
+    new = list(add_new_matches(seen, **kwargs))
+    log.debug('Seen %s new since last query.', len(new))
+    yield new
 
-    log.debug('Seen %s new since last query.', new)
-
-    if new < MAX_MATCHES / lower:
+    if len(new) < MAX_MATCHES / lower:
       interval *= factor
       interval = min(interval, max_wait)
-    if new >= MAX_MATCHES / upper:
+    if len(new) >= MAX_MATCHES / upper:
       interval /= factor
 
     log.debug('Sleeping for %s', interval)
@@ -78,5 +75,6 @@ def infinite_matches_with(**param_possibilities):
     streams.append(izip(repeat(params),
                         infinite_matches(**params)))
 
-  for params, match in chain.from_iterable(izip(*streams)):
-    yield params, match
+  for params, matches in chain.from_iterable(izip(*streams)):
+    for match in matches:
+      yield params, match
